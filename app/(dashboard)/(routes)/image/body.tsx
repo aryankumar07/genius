@@ -1,31 +1,39 @@
 "use client";
 import Heading from "@/components/heading";
 import * as z from "zod";
-import { ImageIcon } from "lucide-react";
+import { Download, ImageIcon, LucideArrowDown } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { formSchema } from "./constants";
+import { amountOptions, formSchema, resolutionOptions } from "./constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ChatCompletionRequestMessage } from "openai";
 import { Empty } from "@/components/empty";
 import { Loader } from "@/components/loader";
-import { cn } from "@/lib/utils";
-import { Botavatar } from "@/components/botavatar";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { SelectTrigger } from "@radix-ui/react-select";
+import { Card, CardFooter } from "@/components/ui/card";
+import Image from "next/image";
 
-const ImagePageBody = ({children} : {children : React.ReactNode}) => {
+const ImagePageBody = () => {
   const router = useRouter();
 
-  const [message, setMessage] = useState<ChatCompletionRequestMessage[]>([]);
+  const [images, setImages] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      amount: "1",
+      resolution: "512x512",
     },
   });
 
@@ -33,18 +41,12 @@ const ImagePageBody = ({children} : {children : React.ReactNode}) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: ChatCompletionRequestMessage = {
-        role: "user",
-        content: values.prompt,
-      };
-      const newMessages = [...message, userMessage];
-
-      const response = await axios.post("/api/conversation", {
-        messages: newMessages,
-      });
-
-      setMessage((current) => [...current, userMessage, response.data]);
-
+      setImages([]);
+      // console.log(values)
+      const response = await axios.post("/api/image", values);
+      const url = response.data.map((image: { url: string }) => image.url);
+      console.log("url is : ", url);
+      setImages(url);
       form.reset();
     } catch (e: unknown) {
       console.log(e);
@@ -72,15 +74,75 @@ const ImagePageBody = ({children} : {children : React.ReactNode}) => {
               <FormField
                 name="prompt"
                 render={({ field }) => (
-                  <FormItem className="col-span-12 lg:col-span-10">
+                  <FormItem className="col-span-12 lg:col-span-6">
                     <FormControl className="m-0 p-0">
                       <Input
                         className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading}
-                        placeholder="How do i calculate radius of a circle"
+                        placeholder="A picture of a horse"
                         {...field}
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-2">
+                    <Select
+                      disabled={isLoading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue defaultValue={field.value} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {amountOptions.map((option) => (
+                          <SelectItem key={option.label} value={option.value}>
+                            <div className="border border-black/10 p-1 rounded-md flex items-center justify-center gap-1">
+                              {option.label}
+                              <LucideArrowDown size={16} />
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="resolution"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-2">
+                    <Select
+                      disabled={isLoading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue defaultValue={field.value} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {resolutionOptions.map((option) => (
+                          <SelectItem key={option.label} value={option.value}>
+                            <div className="border border-black/10 p-1 rounded-md flex items-center justify-center gap-1">
+                              {option.label}
+                              <LucideArrowDown size={16} />
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
@@ -90,29 +152,36 @@ const ImagePageBody = ({children} : {children : React.ReactNode}) => {
         </div>
         <div className="space-y-4 mt-4">
           {isLoading && (
-            <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
+            <div className="p-20 ">
               <Loader />
             </div>
           )}
-          <div className="flex flex-col-reverse gap-y-4">
-            {message.length == 0 && !isLoading && (
-              <div>
-                <Empty label="No Conersation started" />
-              </div>
-            )}
-            {message.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "p-8 w-full flex items-start gap-1",
-                  message.role === "user"
-                    ? "bg-white border border-black/10"
-                    : "bg-muted"
-                )}
-              >
-                {message.role==='user' ? children : <Botavatar/>}
-                {message.content}
-              </div>
+          {images.length == 0 && !isLoading && (
+            <div>
+              <Empty label="No images generated" />
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8">
+            {images.map((image) => (
+              <Card key={image} className="rounded-lg overflow-hidden">
+                <div className="relative w-60 h-60 ">
+                  <Image
+                    src={image}
+                    alt="image"
+                    fill
+                  />
+                </div>
+                <CardFooter className="p-2">
+                  <Button
+                    onClick={()=>window.open(image)}
+                    variant="secondary"
+                    className="w-full cursor-pointer "
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
         </div>

@@ -110,7 +110,7 @@ const ConversationPageBody = ({children} : {children : React.ReactNode}) => {
                     : "bg-muted"
                 )}
               >
-                {message.role==='user' ? children : <Botavatar/>}
+                {message.role === 'user' ? children : <Botavatar/>}
                 {message.content}
               </div>
             ))}

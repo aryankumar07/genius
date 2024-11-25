@@ -1,4 +1,3 @@
-import { UserAvatar } from "@/components/user-avatar";
 import ConversationPageBody from "./body";
 
 const ImagePage = () => {
@@ -8,9 +7,7 @@ const ImagePage = () => {
 
   return (
     <div>
-      <ConversationPageBody>
-        <UserAvatar/>
-      </ConversationPageBody>
+      <ConversationPageBody/>
     </div>
   )
 };
