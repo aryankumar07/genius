@@ -16,6 +16,9 @@ import { Empty } from "@/components/empty";
 import { Loader } from "@/components/loader";
 import { cn } from "@/lib/utils";
 import { Botavatar } from "@/components/botavatar";
+
+
+
 const ConversationPageBody = ({children} : {children : React.ReactNode}) => {
   const router = useRouter();
   const [message, setMessage] = useState<ChatCompletionRequestMessage[]>([]);

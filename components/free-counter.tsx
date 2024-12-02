@@ -4,6 +4,7 @@ import { MAX_FREE_COUNTS } from "@/constant";
 import { Progress } from "./ui/progress";
 import { Button } from "./ui/button";
 import { Zap } from "lucide-react";
+import { useProModelStore } from "@/hooks/show-pro-model";
 
 interface FreeCounterProps {
   apiLimitCount : number
@@ -13,6 +14,8 @@ interface FreeCounterProps {
 const FreeCounter : React.FC<FreeCounterProps> = ({
   apiLimitCount
 }) => {
+
+  const proModel = useProModelStore()
 
   const [mounted, setMounted] = useState(false)
 
@@ -37,7 +40,7 @@ const FreeCounter : React.FC<FreeCounterProps> = ({
               value={(apiLimitCount/MAX_FREE_COUNTS)*100}
             />
           </div>
-          <Button className="w-full" variant="premium">
+          <Button onClick={()=>proModel.onOpen()} className="w-full" variant="premium">
             Upgrade
             <Zap className="w-4 h-4 ml-2 fill-white"/>
           </Button>
